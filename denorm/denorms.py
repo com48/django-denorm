@@ -301,15 +301,24 @@ def flush():
     # may cause an other instance to be marked dirty (dependency chains)
     while True:
         # Get all dirty markers
-        qs = DirtyInstance.objects.all()
-
+        qs = DirtyInstance.objects.values("content_type","object_id").distinct()
+        
         # DirtyInstance table is empty -> all data is consistent -> we're done
         if not qs: break
-
+        
+        dirty_instances = []
+        for instance in qs:
+            object_id, content_type = instance.values()
+            ct = ContentType.objects.get_for_id(content_type)
+            obj = ct.get_object_for_this_type(pk=object_id)
+            dirty_instances.append(obj)
+        
+        #DirtyInstance.objects.all()
         # Call save() on all dirty instances, causing the self_save_handler()
         # getting called by the pre_save signal.
-        for dirty_instance in qs:
-            if dirty_instance.content_object:
-                dirty_instance.content_object.save()
-            dirty_instance.delete()
-
+        for dirty_instance in dirty_instances:
+            if dirty_instance:
+                print dirty_instance
+                dirty_instance.save()
+        
+        DirtyInstance.objects.all().delete()
