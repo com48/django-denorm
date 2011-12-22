@@ -302,22 +302,21 @@ def flush():
     while True:
         # Get all dirty markers
         qs = DirtyInstance.objects.values("content_type","object_id").distinct()
-        
         # DirtyInstance table is empty -> all data is consistent -> we're done
         if not qs: break
         
+        # for all the distinct object we get the object and store them to
+        # use in the next loop
         dirty_instances = []
         for instance in qs:
             object_id, content_type = instance.values()
             ct = ContentType.objects.get_for_id(content_type)
-            obj = ct.get_object_for_this_type(pk=object_id)
-            dirty_instances.append(obj)
+            dirty_instances.append(ct.get_object_for_this_type(pk=object_id))
         
-        #DirtyInstance.objects.all()
+        # we clean th dirtyInstance db to make room for callbacks.
+        DirtyInstance.objects.all().delete()
         # Call save() on all dirty instances, causing the self_save_handler()
         # getting called by the pre_save signal.
         for dirty_instance in dirty_instances:
             if dirty_instance:
                 dirty_instance.save()
-        
-        DirtyInstance.objects.all().delete()
