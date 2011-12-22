@@ -318,7 +318,6 @@ def flush():
         # getting called by the pre_save signal.
         for dirty_instance in dirty_instances:
             if dirty_instance:
-                print dirty_instance
                 dirty_instance.save()
         
         DirtyInstance.objects.all().delete()
