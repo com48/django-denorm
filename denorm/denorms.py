@@ -310,8 +310,9 @@ def flush():
         dirty_instances = []
         for instance in qs:
             object_id, content_type = instance.values()
-            ct = ContentType.objects.get_for_id(content_type)
-            dirty_instances.append(ct.get_object_for_this_type(pk=object_id))
+            if object_id:
+                ct = ContentType.objects.get_for_id(content_type)
+                dirty_instances.append(ct.get_object_for_this_type(pk=object_id))
         
         # we clean th dirtyInstance db to make room for callbacks.
         DirtyInstance.objects.all().delete()
